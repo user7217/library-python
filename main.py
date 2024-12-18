@@ -1,7 +1,9 @@
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import messagebox, simpledialog, ttk
+from PIL import Image, ImageTk
 import json
 import os
+import urllib.request
 
 # JSON Database Files
 user_db_file = "user_db.json"
@@ -22,9 +24,9 @@ def initialize_database():
     if not os.path.exists(book_db_file):
         books = {
             "books": [
-                {"title": "1984", "author": "George Orwell", "is_available": True, "image": "1984.png"},
-                {"title": "To Kill a Mockingbird", "author": "Harper Lee", "is_available": True, "image": "mockingbird.png"},
-                {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "is_available": True, "image": "gatsby.png"}
+                {"title": "1984", "author": "George Orwell", "is_available": True, "image": "https://covers.openlibrary.org/b/id/7222246-L.jpg"},
+                {"title": "To Kill a Mockingbird", "author": "Harper Lee", "is_available": True, "image": "https://covers.openlibrary.org/b/id/8228691-L.jpg"},
+                {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "is_available": True, "image": "https://covers.openlibrary.org/b/id/6516725-L.jpg"}
             ]
         }
         with open(book_db_file, 'w') as f:
@@ -91,12 +93,52 @@ class LibraryKiosk:
         db = load_database(book_db_file)
         books = db["books"]
         
-        book_list = "Available Books:\n\n"
-        for idx, book in enumerate(books):
-            status = "Available" if book["is_available"] else "Borrowed"
-            book_list += f"{idx+1}. {book['title']} by {book['author']} ({status}) - Image: {book['image']}\n"
+        self.main_frame.destroy()
+        self.books_frame = tk.Frame(self.root)
+        self.books_frame.pack(pady=20)
+
+        tk.Label(self.books_frame, text="Library Books", font=("Helvetica", 16)).pack(pady=10)
         
-        messagebox.showinfo("Book List", book_list)
+        canvas = tk.Canvas(self.books_frame)
+        scrollbar = ttk.Scrollbar(self.books_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        for book in books:
+            frame = tk.Frame(scrollable_frame, borderwidth=2, relief="groove")
+            frame.pack(pady=10, padx=10, fill="x")
+
+            try:
+                image_url = book.get("image", "")
+                image_file = f"temp_{book['title'].replace(' ', '_')}.jpg"
+                urllib.request.urlretrieve(image_url, image_file)
+                img = Image.open(image_file)
+                img = img.resize((100, 150))
+                photo = ImageTk.PhotoImage(img)
+            except Exception as e:
+                photo = None
+
+            if photo:
+                image_label = tk.Label(frame, image=photo)
+                image_label.image = photo
+                image_label.pack(side="left", padx=10)
+            
+            text = f"Title: {book['title']}\nAuthor: {book['author']}\nStatus: {'Available' if book['is_available'] else 'Borrowed'}"
+            tk.Label(frame, text=text, justify="left", anchor="w").pack(side="left", padx=10)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        tk.Button(self.books_frame, text="Back", command=self.show_main_menu).pack(pady=10)
 
     def borrow_book(self):
         db = load_database(book_db_file)
@@ -141,7 +183,7 @@ class LibraryKiosk:
             messagebox.showerror("Error", "Book not found or already available.")
 
     def logout(self):
-        self.main_frame.destroy()
+        self.books_frame.destroy()
         self.__init__(self.root)
 
 # Main Function
