@@ -4,19 +4,19 @@
             "title": "1984",
             "author": "George Orwell",
             "is_available": true,
-            "image": "1984.png"
+            "image": "https://covers.openlibrary.org/b/id/7222246-L.jpg"
         },
         {
             "title": "To Kill a Mockingbird",
             "author": "Harper Lee",
             "is_available": true,
-            "image": "mockingbird.png"
+            "image": "https://covers.openlibrary.org/b/id/8228691-L.jpg"
         },
         {
             "title": "The Great Gatsby",
             "author": "F. Scott Fitzgerald",
             "is_available": true,
-            "image": "gatsby.png"
+            "image": "https://covers.openlibrary.org/b/id/6516725-L.jpg"
         }
     ]
 }
